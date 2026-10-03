@@ -15,6 +15,8 @@ concurrency:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   build-and-publish:
@@ -85,6 +87,11 @@ jobs:
         with:
           token: ${{ secrets.LINUX_REPO_PUBLISH_TOKEN }}
           manifest: linux-repo-manifest.json
+
+      - name: Generate build provenance attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'release-assets/*'
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
