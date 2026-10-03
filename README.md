@@ -34,6 +34,7 @@ cargo build --release
 ```
 
 The optimized binary will be created at:
+
 ```bash
 ./target/release/hping
 ```
