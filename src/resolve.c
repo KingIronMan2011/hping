@@ -8,8 +8,6 @@
  * $rev: 8$ 
  */ 
 
-/* $Id: resolve.c,v 1.2 2003/09/01 00:22:06 antirez Exp $ */
-
 #include <stdlib.h>
 #include <sys/types.h>
 #include <netdb.h>
@@ -20,10 +18,10 @@
 #include <arpa/inet.h>
 
 /* On error -1 is returned, on success 0 */
-int resolve_addr(struct sockaddr * addr, char *hostname)
+int resolve_addr(struct sockaddr *addr, char *hostname)
 {
-	struct  sockaddr_in *address;
-	struct  hostent     *host;
+	struct sockaddr_in *address;
+	struct hostent *host;
 
 	address = (struct sockaddr_in *)addr;
 
@@ -31,7 +29,7 @@ int resolve_addr(struct sockaddr * addr, char *hostname)
 	address->sin_family = AF_INET;
 	address->sin_addr.s_addr = inet_addr(hostname);
 
-	if ( (int)address->sin_addr.s_addr == -1) {
+	if ((int)address->sin_addr.s_addr == -1) {
 		host = gethostbyname(hostname);
 		if (host) {
 			memcpy(&address->sin_addr, host->h_addr,
@@ -51,4 +49,35 @@ void resolve(struct sockaddr *addr, char *hostname)
 		fprintf(stderr, "Unable to resolve '%s'\n", hostname);
 		exit(1);
 	}
+}
+
+char *get_hostname(char *addr)
+{
+	static char answer[1024];
+	static char lastreq[1024] = {'\0'};	/* last request */
+	struct hostent *he;
+	struct in_addr naddr;
+	static char *last_answerp = NULL;
+
+	printf(" get hostname..."); fflush(stdout);
+	printf("\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
+		"               "
+		"\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b");
+
+	if (!strcmp(addr, lastreq))
+		return last_answerp;
+
+	strncpy(lastreq, addr, 1024);
+	inet_aton(addr, &naddr);
+	he = gethostbyaddr((char*)&naddr, 4, AF_INET);
+
+	if (he == NULL) {
+		last_answerp = NULL;
+		return NULL;
+	}
+
+	strncpy(answer, he->h_name, 1024);
+	last_answerp = answer;
+
+	return answer;
 }

@@ -46,19 +46,80 @@
 #include "hping2.h"
 #include "globals.h"
 
-/* ripped from ping */
-
-void display_ipopt(char* buf)
+unsigned char ip_opt_build(char *ip_opt)
 {
-int i,j;
-unsigned long l;
-static int old_rrlen;
-static char old_rr[MAX_IPOPTLEN];
-unsigned char* cp;
-int hlen;
-struct myiphdr *ip;
-struct in_addr in;
+	unsigned char optlen = 0;
+	unsigned long ip;
 
+	memset(ip_opt, 1, 40);
+
+	if (opt_lsrr)
+	{
+		if (lsr_length <= 39)
+		{
+			memcpy(ip_opt, &lsr, lsr_length);
+			optlen += lsr_length;
+		}
+		else
+		{
+			printf("Warning: loose source route is too long, discarding it");
+			opt_lsrr = 0;
+		}
+	}
+
+	if (opt_ssrr)
+	{
+		if (ssr_length + optlen <= 39)
+		{
+			memcpy(ip_opt + optlen, &ssr, ssr_length);
+			optlen += ssr_length;
+		}
+		else
+		{
+			printf("Warning: strict source route is too long, discarding it");
+			opt_ssrr = 0;
+		}
+	}
+
+	if (opt_rroute)
+	{
+		if (optlen <= 33)
+		{
+			ip_opt[optlen] = IPOPT_RR;
+			ip_opt[optlen+1] = 39 - optlen;
+			ip_opt[optlen+2] = 8;
+			ip = inet_addr("1.2.3.4");
+			memcpy(ip_opt + optlen + 3, &ip, 4);
+			optlen = 39;
+		}
+		else
+		{
+			printf("Warning: no room for record route, discarding option\n");
+			opt_rroute = 0;
+		}
+	}
+
+	if (optlen)
+	{
+		optlen = (optlen + 3) & ~3;
+		ip_opt[optlen-1] = 0;
+		return optlen;
+	}
+	else
+		return 0;
+}
+
+/* ripped from ping */
+void display_ipopt(char *buf)
+{
+	int i, j;
+	unsigned long l;
+	static int old_rrlen;
+	static char old_rr[MAX_IPOPTLEN];
+	unsigned char *cp;
+	int hlen;
+	struct myiphdr *ip;
+	struct in_addr in;
 
 	ip = (struct myiphdr *)buf;
 	hlen = ip->ihl * 4;
@@ -81,14 +142,14 @@ struct in_addr in;
 					l = (l<<8) + *++cp;
 					l = (l<<8) + *++cp;
 					l = (l<<8) + *++cp;
-				in.s_addr=htonl(l);
-				printf("\t%s",inet_ntoa(in));
-				hlen -= 4;
-				j -= 4;
-				if (j <= IPOPT_MINOFF)
-					break;
-				(void)putchar('\n');
-			}
+					in.s_addr = htonl(l);
+					printf("\t%s", inet_ntoa(in));
+					hlen -= 4;
+					j -= 4;
+					if (j <= IPOPT_MINOFF)
+						break;
+					(void)putchar('\n');
+				}
 			break;
 		case IPOPT_RR:
 			j = *++cp;		/* get length */
@@ -116,8 +177,8 @@ struct in_addr in;
 				l = (l<<8) + *++cp;
 				l = (l<<8) + *++cp;
 				l = (l<<8) + *++cp;
-				in.s_addr=htonl(l);
-				printf("\t%s",inet_ntoa(in));
+				in.s_addr = htonl(l);
+				printf("\t%s", inet_ntoa(in));
 				hlen -= 4;
 				i -= 4;
 				if (i <= 0)
@@ -125,7 +186,6 @@ struct in_addr in;
 				(void)putchar('\n');
 			}
 			putchar('\n');
-			
 			break;
 		case IPOPT_NOP:
 			(void)printf("NOP\n");
@@ -134,5 +194,4 @@ struct in_addr in;
 			(void)printf("unknown option %x\n", *cp);
 			break;
 		}
-
 }

@@ -21,7 +21,7 @@
 #include "hping2.h"
 #include "globals.h"
 
-void send_ip (char* src, char *dst, char *data, unsigned int datalen,
+void send_ip(char *src, char *dst, char *data, unsigned int datalen,
 		int more_fragments, unsigned short fragoff, char *options,
 		char optlen)
 {
@@ -31,7 +31,7 @@ void send_ip (char* src, char *dst, char *data, unsigned int datalen,
 	struct myiphdr	*ip;
 
 	packetsize = IPHDR_SIZE + optlen + datalen;
-	if ( (packet = malloc(packetsize)) == NULL) {
+	if ((packet = malloc(packetsize)) == NULL) {
 		perror("[send_ip] malloc()");
 		return;
 	}
@@ -73,7 +73,7 @@ void send_ip (char* src, char *dst, char *data, unsigned int datalen,
 			htons((unsigned short) src_id);
 	}
 
-#if defined OSTYPE_DARWIN || defined OSTYPE_FREEBSD || defined OSTYPE_NETBSD | defined OSTYPE_BSDI
+#if defined OSTYPE_DARWIN || defined OSTYPE_FREEBSD || defined OSTYPE_NETBSD || defined OSTYPE_BSDI
 /* FreeBSD */
 /* NetBSD */
 	ip->frag_off	|= more_fragments;
@@ -99,14 +99,14 @@ void send_ip (char* src, char *dst, char *data, unsigned int datalen,
 	/* copies data */
 	memcpy(packet + IPHDR_SIZE + optlen, data, datalen);
 	
-    if (opt_debug == TRUE)
-    {
-        unsigned int i;
+	if (opt_debug == TRUE)
+	{
+		unsigned int i;
 
-        for (i=0; i<packetsize; i++)
-            printf("%.2X ", packet[i]&255);
-        printf("\n");
-    }
+		for (i=0; i<packetsize; i++)
+			printf("%.2X ", packet[i]&255);
+		printf("\n");
+	}
 	result = sendto(sockraw, packet, packetsize, 0,
 		(struct sockaddr*)&remote, sizeof(remote));
 	
@@ -124,4 +124,72 @@ void send_ip (char* src, char *dst, char *data, unsigned int datalen,
 	/* inc packet id for safe protocol */
 	if (opt_safe && !eof_reached)
 		src_id++;
+}
+
+void send_ip_handler(char *packet, unsigned int size)
+{
+	ip_optlen = ip_opt_build(ip_opt);
+
+	if (!opt_fragment && (size+ip_optlen+20 >= h_if_mtu))
+	{
+		/* auto-activate fragmentation */
+		virtual_mtu = h_if_mtu-20;
+		virtual_mtu = virtual_mtu - (virtual_mtu % 8);
+		opt_fragment = TRUE;
+		opt_mf = opt_df = FALSE; /* deactivate incompatible options */
+		if (opt_verbose || opt_debug)
+			printf("auto-activate fragmentation, fragments size: %d\n", virtual_mtu);
+	}
+
+	if (!opt_fragment)
+	{
+		unsigned short fragment_flag = 0;
+
+		if (opt_mf) fragment_flag |= MF; /* more fragments */
+		if (opt_df) fragment_flag |= DF; /* dont fragment */
+		send_ip((char*)&local.sin_addr,
+			(char*)&remote.sin_addr,
+			packet, size, fragment_flag, ip_frag_offset,
+			ip_opt, ip_optlen);
+	}
+	else
+	{
+		unsigned int remainder = size;
+		int frag_offset = 0;
+
+		while(1) {
+			if (remainder <= virtual_mtu)
+				break;
+
+			send_ip((char*)&local.sin_addr,
+				(char*)&remote.sin_addr,
+				packet+frag_offset,
+				virtual_mtu, MF, frag_offset,
+				ip_opt, ip_optlen);
+
+			remainder-=virtual_mtu;
+			frag_offset+=virtual_mtu;
+		}
+
+		send_ip((char*)&local.sin_addr,
+			(char*)&remote.sin_addr,
+			packet+frag_offset,
+			remainder, NF, frag_offset,
+			ip_opt, ip_optlen);
+	}
+}
+
+void send_rawip(void)
+{
+	char *packet;
+
+	packet = malloc(data_size);
+	if (packet == NULL) {
+		perror("[send_rawip] malloc()");
+		return;
+	}
+	memset(packet, 0, data_size);
+	data_handler(packet, data_size);
+	send_ip_handler(packet, data_size);
+	free(packet);
 }

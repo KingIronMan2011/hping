@@ -8,12 +8,23 @@
  * $rev: 8$ 
  */ 
 
-/* $Id: sockopt.c,v 1.3 2003/09/07 11:21:18 antirez Exp $ */
-
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h> /* IP_PROTOIP */
+#include <netinet/in.h> /* IPPROTO_RAW, IP_PROTOIP */
 #include <stdio.h>
+
+int open_sockraw(void)
+{
+	int s;
+
+	s = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+	if (s == -1) {
+		perror("[open_sockraw] socket()");
+		return -1;
+	}
+
+	return s;
+}
 
 void socket_broadcast(int sd)
 {

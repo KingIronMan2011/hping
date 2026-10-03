@@ -12,6 +12,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include "release.h"
 
 void	show_usage(void)
 {
@@ -154,3 +155,15 @@ void route_help(void)
 "	to 8, or 4 if provided route is too short for 8;\n"
 "	and each IPx field is an IP address to include in the source route.\n");
 }
+
+void show_version(void)
+{
+	printf("hping version %s (%s)\n", RELEASE_VERSION, RELEASE_DATE);
+#ifdef USE_TCL
+	printf("This binary is TCL scripting capable\n");
+#else
+	printf("NO TCL scripting support compiled in\n");
+#endif
+	exit(0);
+}
+
