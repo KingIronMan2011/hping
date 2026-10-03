@@ -57,28 +57,34 @@ jobs:
       - name: Prepare binary staging directory
         run: |
           mkdir -p release/package/usr/sbin release-assets
-          cp hping3 release/package/usr/sbin/hping3
-          chmod 755 release/package/usr/sbin/hping3
-          tar -czf "release-assets/hping3-${VERSION}-linux-x86_64.tar.gz" -C release/package/usr/sbin hping3
+          cp hping3 release/package/usr/sbin/hping
+          chmod 755 release/package/usr/sbin/hping
+          tar -czf "release-assets/hping-${VERSION}-linux-x86_64.tar.gz" -C release/package/usr/sbin hping
+
+      - name: Validate package staging
+        run: |
+          test -x release/package/usr/sbin/hping
+          test -f packaging/nfpm.yaml
+          grep -q 'release/package/usr/sbin/hping' packaging/nfpm.yaml
 
       - name: Build Debian, RPM, and Arch packages
         run: |
           mkdir -p release
           sed "s/VERSION_PLACEHOLDER/${VERSION}/" packaging/nfpm.yaml > release/nfpm.yaml
-          docker run --rm -v "$PWD:/work" -w /work goreleaser/nfpm:latest package --config release/nfpm.yaml --packager deb --target "release-assets/hping3_${VERSION}_amd64.deb"
-          docker run --rm -v "$PWD:/work" -w /work goreleaser/nfpm:latest package --config release/nfpm.yaml --packager rpm --target "release-assets/hping3-${VERSION}-1.x86_64.rpm"
-          docker run --rm -v "$PWD:/work" -w /work goreleaser/nfpm:latest package --config release/nfpm.yaml --packager archlinux --target "release-assets/hping3-${VERSION}-1-x86_64.pkg.tar.zst"
-          test -s "release-assets/hping3_${VERSION}_amd64.deb"
-          test -s "release-assets/hping3-${VERSION}-1.x86_64.rpm"
-          test -s "release-assets/hping3-${VERSION}-1-x86_64.pkg.tar.zst"
+          docker run --rm -v "$PWD:/work" -w /work goreleaser/nfpm:latest package --config release/nfpm.yaml --packager deb --target "release-assets/hping_${VERSION}_amd64.deb"
+          docker run --rm -v "$PWD:/work" -w /work goreleaser/nfpm:latest package --config release/nfpm.yaml --packager rpm --target "release-assets/hping-${VERSION}-1.x86_64.rpm"
+          docker run --rm -v "$PWD:/work" -w /work goreleaser/nfpm:latest package --config release/nfpm.yaml --packager archlinux --target "release-assets/hping-${VERSION}-1-x86_64.pkg.tar.zst"
+          test -s "release-assets/hping_${VERSION}_amd64.deb"
+          test -s "release-assets/hping-${VERSION}-1.x86_64.rpm"
+          test -s "release-assets/hping-${VERSION}-1-x86_64.pkg.tar.zst"
 
       - name: Generate Linux repository manifest
         run: |
           cat > linux-repo-manifest.json <<EOF
           [
-            { "format": "debian", "package": "release-assets/hping3_${VERSION}_amd64.deb" },
-            { "format": "rpm", "package": "release-assets/hping3-${VERSION}-1.x86_64.rpm", "release": "41", "arch": "x86_64" },
-            { "format": "arch", "package": "release-assets/hping3-${VERSION}-1-x86_64.pkg.tar.zst", "arch": "x86_64" }
+            { "format": "debian", "package": "release-assets/hping_${VERSION}_amd64.deb" },
+            { "format": "rpm", "package": "release-assets/hping-${VERSION}-1.x86_64.rpm", "release": "41", "arch": "x86_64" },
+            { "format": "arch", "package": "release-assets/hping-${VERSION}-1-x86_64.pkg.tar.zst", "arch": "x86_64" }
           ]
           EOF
 
@@ -96,7 +102,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: hping3-linux-packages
+          name: hping-linux-packages
           path: release-assets/*
           if-no-files-found: error
 
@@ -105,6 +111,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
-          name: hping3 ${{ steps.version.outputs.tag }}
+          name: hping ${{ steps.version.outputs.tag }}
           files: release-assets/*
           generate_release_notes: true
