@@ -35,8 +35,8 @@ jobs:
           if [[ "${{ github.ref }}" =~ ^refs/tags/v?([0-9]+(\.[0-9]+)*.*) ]]; then
             version="${BASH_REMATCH[1]}"
           else
-            version=$(grep '^version' Cargo.toml | head -1 | cut -d '"' -f 2 || echo "3.1.0")
-            if [ -z "$version" ]; then version="3.1.0"; fi
+            version=$(grep '^version' Cargo.toml | head -1 | cut -d '"' -f 2 || echo "3.1.1")
+            if [ -z "$version" ]; then version="3.1.1"; fi
           fi
           tag="v$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"

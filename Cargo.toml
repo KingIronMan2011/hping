@@ -1,6 +1,6 @@
 [package]
 name = "hping"
-version = "3.1.0"
+version = "3.1.1"
 edition = "2021"
 authors = ["Salvatore Sanfilippo <antirez@invece.org>", "hping contributors"]
 description = "A command-line oriented TCP/IP packet assembler and analyzer rewritten in Rust"

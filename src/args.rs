@@ -6,7 +6,7 @@ use std::time::Duration;
 #[command(
     name = "hping",
     author = "Salvatore Sanfilippo <antirez@invece.org>, Rust port contributors",
-    version = "3.1.0",
+    version = "3.1.1",
     about = "A command-line oriented TCP/IP packet assembler and analyzer in Rust",
     disable_version_flag = true,
     long_about = None
