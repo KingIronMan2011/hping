@@ -42,7 +42,21 @@
 #define __uint32_t	u_int32_t
 #endif /* __uint32_t */
 
-#include "hcmp.h" /* Hping Control Message Protocol */
+/* Hping Control Message Protocol */
+#define HCMP_RESTART		1
+#define HCMP_SOURCE_QUENCH	2
+#define HCMP_SOURCE_STIRUP	3
+#define HCMP_CHPROTO		4 /* still unused */
+
+struct hcmphdr
+{
+	__u8	type;
+	union
+	{
+		__u16 seqnum;
+		__u32 usec;
+	} typedep;
+};
 
 /* protocols header size */
 #ifndef ICMPHDR_SIZE
@@ -404,8 +418,6 @@ char	*memstr(char *haystack, char *needle, int size); /* memstr */
 void	tos_help(void);				/* show the TOS help */
 int	rtt(int *seqp, int recvport, float *ms_delay);	/* compute round trip time */
 int	relativize_id(int seqnum, int *ip_id);	/* compute relative id */
-int	if_promisc_on(int s);			/* promisc. mode ON */
-int	if_promisc_off(int s);			/* promisc. mode OFF */
 int	open_pcap(void);			/* open libpcap socket */
 int	close_pcap(void);			/* close libpcap socket */
 int	pcap_recv(char *, unsigned int);	/* libpcap api wrapper */

@@ -21,24 +21,19 @@ VPATH = src
 
 ARSOBJ = ars.o apd.o split.o rapd.o
 
-OBJ=	main.o getifname.o getlhs.o \
-	parseoptions.o datafiller.o \
-	datahandler.o gethostname.o \
-	binding.o getusec.o opensockraw.o \
-	logicmp.o waitpacket.o resolve.o \
+OBJ=	main.o interface.o parseoptions.o \
+	datahandler.o getusec.o \
+	waitpacket.o resolve.o \
 	sendip.o sendicmp.o sendudp.o \
 	sendtcp.o cksum.o statistics.o \
-	usage.o version.o antigetopt.o \
+	usage.o antigetopt.o \
 	sockopt.o listen.o \
-	sendhcmp.o memstr.o rtt.o \
-	relid.o sendip_handler.o \
-	libpcap_stuff.o memlockall.o memunlockall.o \
-	memlock.o memunlock.o ip_opt_build.o \
-	display_ipopt.o sendrawip.o signal.o send.o \
-	strlcpy.o arsglue.o random.o scan.o \
-	hstring.o script.o interface.o \
-	adbuf.o hex.o apdutils.o sbignum.o \
-	sbignum-tables.o $(ARSOBJ)
+	rtt.o libpcap_stuff.o \
+	memlock.o display_ipopt.o \
+	signal.o send.o strlcpy.o \
+	random.o scan.o hstring.o \
+	script.o adbuf.o sbignum.o \
+	$(ARSOBJ)
 
 all: .depend hping3
 
