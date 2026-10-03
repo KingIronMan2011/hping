@@ -18,7 +18,6 @@
 #include <ctype.h>
 #include "ars.h"
 #include "hstring.h"
-#include "hex.h"
 
 /* FIXME: parsing should use dynamic buffers to use less memory.
  * For now we support MTU up to 3000 */
@@ -1035,3 +1034,155 @@ int ars_d_build(struct ars_packet *pkt, char *t)
 	}
 	return -ARS_OK;
 }
+
+/* -------------------- Hex conversion utilities -------------------- */
+
+static char hval[256] = {
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+  0,   1,   2,   3,   4,   5,   6,   7,   8,   9, 255, 255, 255, 255, 255, 255, 
+255,  10,  11,  12,  13,  14,  15, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255,  10,  11,  12,  13,  14,  15, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 
+255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, };
+
+static char hcharset[16] = "0123456789abcdef";
+
+int hextobin(void *dest, char *hexstr, int len)
+{
+	int i, binlen;
+	char *s = hexstr;
+	unsigned char *d = dest;
+
+	if (len == -1)
+		len = strlen(hexstr);
+	if (len % 2)
+		return 1; /* error, odd count */
+	binlen = len / 2;
+	for (i = 0; i < binlen; i++) {
+		int high, low;
+
+		high = hval[((unsigned)*s)&0xFF];
+		low = hval[((unsigned)*(s+1))&0xFF];
+		if (high == 255 || low == 255)
+			return 1; /* invalid char in hex string */
+		high <<= 4;
+		*d = high|low;
+		d++;
+		s+=2;
+	}
+	return 0;
+}
+
+void bintohex(char *dest, void *bin, int len)
+{
+	unsigned char *b = bin;
+	int i, high, low;
+
+	for (i = 0; i < len; i++) {
+		low = *b & 0xF;
+		high = (*b & 0xF0) >> 4;
+		*dest++ = hcharset[high];
+		*dest++ = hcharset[low];
+		b++;
+	}
+}
+
+/* -------------------- APD utility functions -------------------- */
+
+int ars_d_firstfield_off(char *packet, char *layer, char *field,
+		int *field_start, int *value_start, int *value_end)
+{
+	int layerlen = strlen(layer);
+	int fieldlen = strlen(field);
+	int pktlen = strlen(packet);
+	char *x = alloca(layerlen+3);
+	char *y = alloca(fieldlen+3);
+	char *p, *j, *w;
+	x[0] = '+';
+	memcpy(x+1, layer, layerlen);
+	x[layerlen+1] = '(';
+	x[layerlen+2] = '\0';
+	if (pktlen <= layerlen+1)
+		return 0;
+	if (memcmp(packet, x+1, layerlen+1) == 0) {
+		p = packet;
+	} else {
+		p = strstr(packet, x);
+		if (p == NULL)
+			return 0;
+		p++;
+	}
+	y[0] = ',';
+	memcpy(y+1, field, fieldlen);
+	y[fieldlen+1] = '=';
+	y[fieldlen+2] = '\0';
+	p += layerlen + 1;
+	pktlen -= p-packet;
+	if (pktlen <= fieldlen+1)
+		return 0;
+	if ((j = strchr(p, ')')) == NULL)
+		return 0;
+	if (memcmp(p, y+1, fieldlen+1)) {
+		p = strstr(p, y);
+		if (p == NULL || p >= j)
+			return 0;
+		p++;
+	}
+	if (field_start) *field_start = p-packet;
+	p += fieldlen + 1;
+	if (value_start) *value_start = p-packet;
+	w = strchr(p, ',');
+	if (w && w < j)
+		j = w;
+	if (value_end) *value_end = (j-packet)-1;
+	return 1;
+}
+
+int ars_d_field_off(char *packet, char *layer, char *field, int skip,
+		int *field_start, int *value_start, int *value_end)
+{
+	char *p = packet;
+	int end, toadd;
+
+	/* Minimal overhead with a zero skip */
+	if (skip <= 0)
+		return ars_d_firstfield_off(packet, layer, field,
+				field_start, value_start, value_end);
+	do {
+		if (!ars_d_firstfield_off(p, layer, field,
+					field_start, value_start, &end))
+			return 0;
+		toadd = p-packet;
+		p += end;
+	} while(skip--);
+	if (value_end) *value_end = end + toadd;
+	if (field_start) *field_start += toadd;
+	if (value_start) *value_start += toadd;
+	return 1;
+}
+
+char *ars_d_field_get(char *packet, char *layer, char *field, int skip)
+{
+	int start, end, len;
+	char *x;
+
+	if (!ars_d_field_off(packet, layer, field, skip, NULL, &start, &end))
+		return NULL;
+	len = end-start+1;
+	if ((x = malloc(len+1)) == NULL)
+		return NULL;
+	memcpy(x, packet+start, len);
+	x[len] = '\0';
+	return x;
+}
+

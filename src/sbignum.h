@@ -59,6 +59,11 @@ enum sbn_err {
 #define SBN_MINBASE	2
 #define SBN_MAXBASE	36
 
+struct sbn_basepow {
+	unsigned long maxpow;
+	unsigned long maxexp;
+};
+
 /* Exported macros */
 
 /* this macro is true if z == 0 */

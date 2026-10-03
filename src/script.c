@@ -34,7 +34,6 @@
 #include "hping2.h"
 #include "ars.h"
 #include "interface.h"
-#include "apdutils.h"
 #include "sbignum.h"
 
 #define HPING_IF_MAX	8
