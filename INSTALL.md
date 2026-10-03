@@ -1,62 +1,23 @@
-You can compile hping3 at least under:
+# Installation
 
-Linux
-OpenBSD
-FreeBSD
-NetBSD
-Solaris
+## Prerequisites
 
-But hping3 is beta, for now it was mostly tested only in Linux,
-this should change soon now that the first beta is out.
+To build and run `hping` in Rust, ensure you have:
 
-Note that starting from hping3 libpcap should be used
-with all the kind of systems, including Linux.
+- Rust and Cargo (`curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)
+- Linux with root privileges or `CAP_NET_RAW` capability:
+  ```bash
+  sudo setcap cap_net_raw,cap_net_admin=eip ./target/release/hping
+  ```
 
-Linux
------
+## Compilation
 
-please, follows this steps:
+```bash
+cargo build --release
+```
 
-$ ./configure (first try ./configure --help)
-$ vi Makefile (optional)
-$ make
-$ su
-# make install
+To install system-wide:
 
-FreeBSD, OpenBSD, NetBSD
-------------------------
-
-You will need the libpcap and the gmake utility installed on your system. 
-
-$ ./configure
-$ gmake
-$ su (or calife)
-# gmake install
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-NOTE: You should take care about your net/bpf.h file installing on
-      BSD systems (specially with OpenBSD). If your original bpf.h was
-      overwritten with the libpcap one probably hping will not work
-      with over some interface.
-
-      For example if you use the libpcap bpf.h on OpenBSD hping will
-      not work over PPP interfaces.
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Solaris
--------
-
-$ export CC="gcc"
-$ ./configure
-$ gmake
-$ su
-# gmake install
-
-ALL
----
-
-To setuid hping3 is like to open the port to script kiddies
-for now. Don't do it in any real multiuser and otherwise
-security-sensitive system.
-
-antirez
+```bash
+cargo install --path .
+```

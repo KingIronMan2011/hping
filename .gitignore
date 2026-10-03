@@ -14,3 +14,4 @@ src/systype.h
 libars.a
 release/
 release-assets/
+target/

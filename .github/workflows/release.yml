@@ -25,6 +25,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Determine version
         id: version
         shell: bash
@@ -32,8 +35,8 @@ jobs:
           if [[ "${{ github.ref }}" =~ ^refs/tags/v?([0-9]+(\.[0-9]+)*.*) ]]; then
             version="${BASH_REMATCH[1]}"
           else
-            version=$(awk -F '"' '/#define RELEASE_VERSION/ { print $2 }' src/release.h | sed 's/-alpha-1//' || echo "3.0.0")
-            if [ -z "$version" ]; then version="3.0.0"; fi
+            version=$(grep '^version' Cargo.toml | head -1 | cut -d '"' -f 2 || echo "3.1.0")
+            if [ -z "$version" ]; then version="3.1.0"; fi
           fi
           tag="v$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -41,23 +44,18 @@ jobs:
           echo "VERSION=$version" >> "$GITHUB_ENV"
           echo "TAG=$tag" >> "$GITHUB_ENV"
 
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gcc make libpcap-dev tcl-dev
-          sudo ln -sf /usr/include/pcap/bpf.h /usr/include/net/bpf.h 2>/dev/null || true
+      - name: Run tests
+        run: cargo test --verbose
 
-      - name: Configure and build hping3
+      - name: Build release binary
         run: |
-          ./configure
-          make
-          make strip
-          ./hping3 -v
+          cargo build --release
+          ./target/release/hping -v
 
       - name: Prepare binary staging directory
         run: |
           mkdir -p release/package/usr/sbin release-assets
-          cp hping3 release/package/usr/sbin/hping
+          cp target/release/hping release/package/usr/sbin/hping
           chmod 755 release/package/usr/sbin/hping
           tar -czf "release-assets/hping-${VERSION}-linux-x86_64.tar.gz" -C release/package/usr/sbin hping
 

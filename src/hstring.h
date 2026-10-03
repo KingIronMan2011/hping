@@ -1,8 +1,0 @@
-#ifndef HPING_HSTRING_H
-#define HPING_HSTRING_H
-
-int strisnum(char *s);
-size_t strftok(char *sep, char *str, char **tptrs, size_t nptrs);
-char *memstr(char *haystack, char *needle, int size);
-
-#endif

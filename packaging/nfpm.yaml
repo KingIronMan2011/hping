@@ -6,7 +6,7 @@ release: "1"
 section: net
 priority: optional
 maintainer: KingIronMan2011
-description: A command-line oriented TCP/IP packet assembler and analyzer.
+description: A command-line oriented TCP/IP packet assembler and analyzer rewritten in Rust.
 vendor: antirez
 homepage: http://www.hping.org
 license: GPL-2.0
@@ -23,12 +23,9 @@ overrides:
   deb:
     depends:
       - libc6
-      - libpcap0.8
   rpm:
     depends:
       - glibc
-      - libpcap
   archlinux:
     depends:
       - glibc
-      - libpcap

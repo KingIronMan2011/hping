@@ -1,66 +1,72 @@
-# hping
+# hping (Rust)
 
-A command-line oriented TCP/IP packet assembler and analyzer.
+A high-performance, command-line oriented TCP/IP packet assembler and analyzer rewritten in pure, safe Rust.
 
-**Author**: Salvatore Sanfilippo <antirez@invece.org>  
+**Original Author**: Salvatore Sanfilippo <antirez@invece.org>  
 **License**: [GPL-2.0](LICENSE.md)
 
 ---
 
 ## Description
 
-`hping` is a network tool able to send custom TCP/IP packets and to display target replies like `ping` does with ICMP replies. It handles fragmentation, arbitrary packet sizes, and arbitrary packet contents via the command-line interface.
+`hping` is a network tool capable of sending custom TCP/IP packets and displaying target replies, similar to `ping` but with full control over TCP, UDP, ICMP, and RAW IP protocols. It supports MTU fragmentation, custom packet sizes, arbitrary payload signatures/files, TCP flag manipulation, traceroute path discovery, high-throughput flooding, and multi-port scanning.
 
-Since version 3, `hping` implements scripting capabilities (see `docs/API.txt` for details).
+### Core Capabilities
 
-### Common Use Cases
-
-- **Firewall & ACL Testing**: Test filtering rules and security appliances.
-- **Advanced Traceroute**: Traceroute-like path discovery over any supported protocol (TCP, UDP, ICMP, Raw IP).
-- **Firewalking**: Determine firewall rules and open ports behind filtering gateways.
-- **Remote OS Fingerprinting**: Inspect TCP/IP stack behavior to identify remote operating systems.
-- **Port Scanning**: High-performance port scanning via the `--scan` option.
-- **TCP/IP Stack Auditing**: Audit sequence numbers, timestamp options, and fragmentation handling.
-- **Network Learning & Education**: A didactic tool for exploring the TCP/IP protocol suite in depth.
+- **TCP / UDP / ICMP / Raw IP Ping**: Send custom probes and analyze responses with microsecond-level RTT tracking.
+- **Port Scanning (`--scan`)**: High-performance multi-port scanning across port lists and ranges (e.g. `--scan 1-1024,8080 -S target`).
+- **Advanced Traceroute (`--traceroute`)**: Path discovery over TCP, UDP, or ICMP, extracting router hops from ICMP Time Exceeded packets with reverse DNS and per-hop RTT.
+- **Packet Flooding (`--flood`)**: Ultra-high-speed packet generation for firewall stress testing and bandwidth saturation without waiting for replies.
+- **Packet Crafting**: Bit-level control over IP headers (TTL, ID, TOS, DF/MF flags, fragmentation offset, virtual MTU) and TCP headers (flags SYN/ACK/FIN/RST/PSH/URG/XMAS/YMAS, sequence/ack numbers, window size, fake data offset, TCP timestamp option).
+- **Inspection & Sniffing (`--listen`, `--dump`, `--print`)**: Passive signature matching and hex/ASCII packet inspection.
 
 ---
 
-## Scripting Capabilities
+## Requirements & Building
 
-Using Tcl/Tk scripting, complex packet sequences, test suites, and protocol simulations can be authored.
+- Rust toolchain (version 1.80+ or 2021 edition)
+- Root / superuser / `CAP_NET_RAW` privileges on Linux (required for raw sockets and `AF_PACKET`)
 
-Example scripts are available under the [`lib/`](lib/) directory. To run an example script:
+### Build Instructions
 
 ```bash
-hping exec lib/<ScriptName>.htcl [arguments]
+cargo build --release
+```
+
+The optimized binary will be created at:
+```bash
+./target/release/hping
+```
+
+### Running Tests
+
+```bash
+cargo test
 ```
 
 ---
 
-## Documentation
-
-- Check the API reference in `docs/API.txt`.
-- Manual page: `docs/hping3.8` (or `man hping` once installed).
-- Additional guides and technical notes are located in the [`docs/`](docs/) directory.
-
----
-
-## Requirements
-
-- Unix-like operating system (Linux, BSD, macOS, Solaris)
-- GCC or Clang
-- `libpcap` library and development headers
-- `tcl` development headers (optional, for scripting support)
-- Root / superuser privileges (required for raw sockets)
-
----
-
-## Installation
-
-See [`INSTALL.md`](INSTALL.md) for full compilation and installation instructions.
+## Usage Examples
 
 ```bash
-./configure
-make
-sudo make install
+# TCP SYN ping to port 80 (default mode)
+sudo ./target/release/hping example.com -p 80 -S
+
+# ICMP ping with custom packet count
+sudo ./target/release/hping example.com --icmp -c 5
+
+# UDP ping
+sudo ./target/release/hping example.com --udp -p 53
+
+# Advanced TCP traceroute to port 443
+sudo ./target/release/hping example.com --traceroute -p 443 -S
+
+# Multi-port SYN scan
+sudo ./target/release/hping example.com --scan 21,22,80,443,8080 -S
+
+# High-speed packet flood
+sudo ./target/release/hping example.com --flood -p 80 -S --rand-source
+
+# Fragmented packets with virtual MTU of 64 bytes
+sudo ./target/release/hping example.com -d 200 --frag -m 64
 ```
