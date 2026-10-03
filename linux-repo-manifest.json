@@ -1,0 +1,5 @@
+[
+  { "format": "debian", "package": "release-assets/hping3_3.0.0_amd64.deb" },
+  { "format": "rpm", "package": "release-assets/hping3-3.0.0-1.x86_64.rpm", "release": "41", "arch": "x86_64" },
+  { "format": "arch", "package": "release-assets/hping3-3.0.0-1-x86_64.pkg.tar.zst", "arch": "x86_64" }
+]

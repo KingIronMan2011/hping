@@ -1,8 +1,16 @@
 .depend
 *.o
+src/*.o
+hping
 hping3
+hping3-static
 *.swp
 Makefile
 byteorder
 byteorder.h
 systype.h
+src/byteorder.h
+src/systype.h
+libars.a
+release/
+release-assets/

@@ -6,13 +6,13 @@ FreeBSD
 NetBSD
 Solaris
 
-Avec Linux vous n'avez besoin d'aucune bibliothèque, ni d'être root,
-cependant vous avez besoin d'un uid 0 pour exécuter hping.
+Avec Linux vous n'avez besoin d'aucune bibliothÃ¨que, ni d'Ãªtre root,
+cependant vous avez besoin d'un uid 0 pour exÃ©cuter hping.
 
 Linux
 -----
 
-merci de suivre les étapes suivantes :
+merci de suivre les Ã©tapes suivantes :
 
 $ ./configure (essayer d'abord ./configure --help)
 $ vi Makefile (facultatif)
@@ -23,8 +23,8 @@ $ su
 FreeBSD, OpenBSD, NetBSD
 ------------------------
 
-Vous aurez besoin de la libpcap et le l'utilitaire gmake installés sur votre
-système.
+Vous aurez besoin de la libpcap et le l'utilitaire gmake installÃ©s sur votre
+systÃ¨me.
 
 $ ./configure
 $ gmake
@@ -32,9 +32,9 @@ $ su (ou calife)
 # gmake install
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-NOTE : vous devez faire attention à votre fichier net/bpf.h en installant
-  sur les systèmes BSD (spécialement avec OpenBSD). Si votre fichier bpf.h
-  original a été écrasé avec celui de libpcap alors probablement que hping
+NOTE : vous devez faire attention Ã  votre fichier net/bpf.h en installant
+  sur les systÃ¨mes BSD (spÃ©cialement avec OpenBSD). Si votre fichier bpf.h
+  original a Ã©tÃ© Ã©crasÃ© avec celui de libpcap alors probablement que hping
   ne fonctionnera pas avec certaines interfaces.
 
   Par exemple si vous utilisez le fichier bpf.h de libpcap sur OpenBSD alors
@@ -53,20 +53,20 @@ $ su
 TOUS
 ----
 
-Si vous avez besoin d'exécuter hping2 avec votre compte normal (c.-à-d.
+Si vous avez besoin d'exÃ©cuter hping2 avec votre compte normal (c.-Ã -d.
 antirez) essayez les commandes suivantes :
 
 # chown root:antirez /usr/sbin/hping2
 # chmod 4750 /usr/sbin/hping2
 
 	ATTENTION : hping2 n'est pas du code de confiance,
-	je ne l'ai pas audité pour les débordements de
-	tampons cachés et autres problèmes en relation avec
-	la sécurité. Cependant si (comme par défaut)
-	LIMITWHENSUID est défini alors si euid != uid il
+	je ne l'ai pas auditÃ© pour les dÃ©bordements de
+	tampons cachÃ©s et autres problÃ¨mes en relation avec
+	la sÃ©curitÃ©. Cependant si (comme par dÃ©faut)
+	LIMITWHENSUID est dÃ©fini alors si euid != uid il
 	n'est pas possible d'utiliser beaucoup d'options
-	triviallement non sûres.
+	triviallement non sÃ»res.
 
-	le rendre suid n'est pas encouragé.
+	le rendre suid n'est pas encouragÃ©.
 
 antirez

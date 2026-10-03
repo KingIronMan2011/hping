@@ -1,0 +1,103 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - master
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" =~ ^refs/tags/v?([0-9]+(\.[0-9]+)*.*) ]]; then
+            version="${BASH_REMATCH[1]}"
+          else
+            version=$(awk -F '"' '/#define RELEASE_VERSION/ { print $2 }' src/release.h | sed 's/-alpha-1//' || echo "3.0.0")
+            if [ -z "$version" ]; then version="3.0.0"; fi
+          fi
+          tag="v$version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "TAG=$tag" >> "$GITHUB_ENV"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc make libpcap-dev tcl-dev
+          sudo ln -sf /usr/include/pcap/bpf.h /usr/include/net/bpf.h 2>/dev/null || true
+
+      - name: Configure and build hping3
+        run: |
+          ./configure
+          make
+          make strip
+          ./hping3 -v
+
+      - name: Prepare binary staging directory
+        run: |
+          mkdir -p release/package/usr/sbin release-assets
+          cp hping3 release/package/usr/sbin/hping3
+          chmod 755 release/package/usr/sbin/hping3
+          tar -czf "release-assets/hping3-${VERSION}-linux-x86_64.tar.gz" -C release/package/usr/sbin hping3
+
+      - name: Build Debian, RPM, and Arch packages
+        run: |
+          mkdir -p release
+          sed "s/VERSION_PLACEHOLDER/${VERSION}/" packaging/nfpm.yaml > release/nfpm.yaml
+          docker run --rm -v "$PWD:/work" -w /work goreleaser/nfpm:latest package --config release/nfpm.yaml --packager deb --target "release-assets/hping3_${VERSION}_amd64.deb"
+          docker run --rm -v "$PWD:/work" -w /work goreleaser/nfpm:latest package --config release/nfpm.yaml --packager rpm --target "release-assets/hping3-${VERSION}-1.x86_64.rpm"
+          docker run --rm -v "$PWD:/work" -w /work goreleaser/nfpm:latest package --config release/nfpm.yaml --packager archlinux --target "release-assets/hping3-${VERSION}-1-x86_64.pkg.tar.zst"
+          test -s "release-assets/hping3_${VERSION}_amd64.deb"
+          test -s "release-assets/hping3-${VERSION}-1.x86_64.rpm"
+          test -s "release-assets/hping3-${VERSION}-1-x86_64.pkg.tar.zst"
+
+      - name: Generate Linux repository manifest
+        run: |
+          cat > linux-repo-manifest.json <<EOF
+          [
+            { "format": "debian", "package": "release-assets/hping3_${VERSION}_amd64.deb" },
+            { "format": "rpm", "package": "release-assets/hping3-${VERSION}-1.x86_64.rpm", "release": "41", "arch": "x86_64" },
+            { "format": "arch", "package": "release-assets/hping3-${VERSION}-1-x86_64.pkg.tar.zst", "arch": "x86_64" }
+          ]
+          EOF
+
+      - name: Publish Linux packages to repo.kingironman.dev
+        uses: KingIronMan2011/linux-repo@main
+        with:
+          token: ${{ secrets.LINUX_REPO_PUBLISH_TOKEN }}
+          manifest: linux-repo-manifest.json
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hping3-linux-packages
+          path: release-assets/*
+          if-no-files-found: error
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: hping3 ${{ steps.version.outputs.tag }}
+          files: release-assets/*
+          generate_release_notes: true

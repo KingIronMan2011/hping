@@ -1,0 +1,8 @@
+# Enforce LF endings across Unix build files and sources
+* text=auto eol=lf
+Makefile* text eol=lf
+*.mk text eol=lf
+*.sh text eol=lf
+configure text eol=lf
+*.c text eol=lf
+*.h text eol=lf

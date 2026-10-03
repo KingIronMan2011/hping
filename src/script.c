@@ -23,7 +23,11 @@
 #include <sched.h>
 
 #include <sys/ioctl.h>
+#if defined(__linux__) || defined(__GLIBC__)
+#include <pcap/bpf.h>
+#else
 #include <net/bpf.h>
+#endif
 #include <pcap.h>
 
 #include "release.h"

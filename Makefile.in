@@ -9,13 +9,15 @@
 CC= gcc
 AR=/usr/bin/ar
 RANLIB=/usr/bin/ranlib
-CCOPT= -O2 -Wall @PCAP_INCLUDE@ @TCL_INC@ @USE_TCL@
+CCOPT= -O2 -Wall -I. -Isrc @PCAP_INCLUDE@ @TCL_INC@ @USE_TCL@
 DEBUG= -g
 #uncomment the following if you need libpcap based build under linux
 #(not raccomanded)
 COMPILE_TIME=
 INSTALL_MANPATH=@MANPATH@
 @PCAP@
+
+VPATH = src
 
 ARSOBJ = ars.o apd.o split.o rapd.o
 
@@ -43,7 +45,7 @@ all: .depend hping3
 dep: .depend
 .depend:
 	@echo Making dependences
-	@$(CC) -MM *.c > .depend
+	@$(CC) -I. -Isrc -MM src/*.c > .depend
 
 libars.a: $(ARSOBJ)
 	$(AR) rc $@ $^
@@ -54,7 +56,7 @@ hping3: byteorder.h $(OBJ)
 	@echo
 	./hping3 -v
 	@echo "use \`make strip' to strip hping3 binary"
-	@echo "use \`make install' to install hping3"
+	@echo "use \`make install' to install hping"
 
 hping3-static: byteorder.h $(OBJ)
 	$(CC) -static -o hping3-static $(CCOPT) $(DEBUG) $(OBJ) -L/usr/local/lib $(PCAP) @SOLARISLIB@ @TCL_LIB@ -ldl
@@ -62,23 +64,24 @@ hping3-static: byteorder.h $(OBJ)
 byteorder.h:
 	./configure
 
+%.o: src/%.c
+	$(CC) -c $(CCOPT) $(DEBUG) $(COMPILE_TIME) $< -o $@
+
 .c.o:
 	$(CC) -c $(CCOPT) $(DEBUG) $(COMPILE_TIME) $<
 
 clean:
-	rm -rf hping3 *.o libars.a
+	rm -rf hping3 *.o libars.a src/*.o
 
 distclean:
-	rm -rf hping3 *.o byteorder byteorder.h systype.h Makefile libars.a .depend
+	rm -rf hping3 *.o byteorder byteorder.h systype.h Makefile libars.a .depend src/*.o src/byteorder.h src/systype.h
 
 install: hping3
-	cp -f hping3 /usr/sbin/
-	chmod 755 /usr/sbin/hping3
-	ln -s /usr/sbin/hping3 /usr/sbin/hping
-	ln -s /usr/sbin/hping3 /usr/sbin/hping2
+	cp -f hping3 /usr/sbin/hping
+	chmod 755 /usr/sbin/hping
 	@if [ -d ${INSTALL_MANPATH}/man8 ]; then \
-		cp ./docs/hping3.8 ${INSTALL_MANPATH}/man8; \
-		chmod 644 ${INSTALL_MANPATH}/man8/hping3.8; \
+		cp ./docs/hping3.8 ${INSTALL_MANPATH}/man8/hping.8; \
+		chmod 644 ${INSTALL_MANPATH}/man8/hping.8; \
 	else \
 		echo "@@@@@@ WARNING @@@@@@"; \
 		echo "Can't install the man page: ${INSTALL_MANPATH}/man8 does not exist"; \
