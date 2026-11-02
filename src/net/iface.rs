@@ -1,8 +1,18 @@
 //! Local IP and interface discovery.
 use std::net::{Ipv4Addr, SocketAddr, UdpSocket};
 
+#[cfg(windows)]
+use crate::net::windows::get_best_route_info;
+
 /// Determines the local IPv4 address that would be used to route to `dst`.
 pub fn get_local_ip_for_dest(dst: Ipv4Addr) -> std::io::Result<Ipv4Addr> {
+    #[cfg(windows)]
+    {
+        if let Ok(info) = get_best_route_info(dst) {
+            return Ok(info.src_ip);
+        }
+    }
+
     let dummy = UdpSocket::bind("0.0.0.0:0")?;
     dummy.connect(SocketAddr::from((dst, 80)))?;
     if let SocketAddr::V4(addr) = dummy.local_addr()? {

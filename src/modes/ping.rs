@@ -96,7 +96,7 @@ pub fn run_ping(args: &CliArgs, dst_ip: Ipv4Addr, running: Arc<AtomicBool>) -> R
     let max_count = args.count;
 
     let sniffer_thread = thread::spawn(move || {
-        let mut sniffer = match PacketSniffer::new(sniffer_iface.as_deref()) {
+        let mut sniffer = match PacketSniffer::new(sniffer_iface.as_deref(), Some(dst_ip)) {
             Ok(s) => s,
             Err(_) => return,
         };
@@ -233,7 +233,7 @@ pub fn run_ping(args: &CliArgs, dst_ip: Ipv4Addr, running: Arc<AtomicBool>) -> R
         }
     });
 
-    let sender = RawSocketSender::new(args.interface.as_deref())?;
+    let sender = RawSocketSender::new(args.interface.as_deref(), dst_ip)?;
     let interval = args.get_interval();
     let mut sequence: u32 = 0;
     let mut rng = rand::thread_rng();

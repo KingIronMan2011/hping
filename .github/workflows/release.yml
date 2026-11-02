@@ -19,8 +19,54 @@ permissions:
   attestations: write
 
 jobs:
+  build-windows:
+    name: Build Windows Release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Determine version
+        id: version
+        shell: bash
+        run: |
+          if [[ "${{ github.ref }}" =~ ^refs/tags/v?([0-9]+(\.[0-9]+)*.*) ]]; then
+            version="${BASH_REMATCH[1]}"
+          else
+            version=$(grep '^version' Cargo.toml | head -1 | cut -d '"' -f 2 || echo "3.1.1")
+            if [ -z "$version" ]; then version="3.1.1"; fi
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Run tests
+        run: cargo test --verbose
+
+      - name: Build release binary
+        run: |
+          cargo build --release
+          .\target\release\hping.exe -v
+
+      - name: Package Windows asset
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release-assets
+          Compress-Archive -Path target/release/hping.exe, README.md, LICENSE.md -DestinationPath "release-assets/hping-$env:VERSION-windows-x86_64.zip"
+
+      - name: Upload Windows release asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: hping-windows-packages
+          path: release-assets/*
+          if-no-files-found: error
+
   build-and-publish:
+    name: Build Linux and Publish
     runs-on: ubuntu-latest
+    needs: build-windows
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -76,6 +122,12 @@ jobs:
           test -s "release-assets/hping-${VERSION}-1.x86_64.rpm"
           test -s "release-assets/hping-${VERSION}-1-x86_64.pkg.tar.zst"
 
+      - name: Download Windows release asset
+        uses: actions/download-artifact@v4
+        with:
+          name: hping-windows-packages
+          path: release-assets
+
       - name: Generate Linux repository manifest
         run: |
           cat > linux-repo-manifest.json <<EOF
@@ -97,10 +149,10 @@ jobs:
         with:
           subject-path: 'release-assets/*'
 
-      - name: Upload build artifacts
+      - name: Upload all build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: hping-linux-packages
+          name: hping-all-packages
           path: release-assets/*
           if-no-files-found: error
 

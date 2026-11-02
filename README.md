@@ -25,7 +25,8 @@ A high-performance, command-line oriented TCP/IP packet assembler and analyzer r
 ## Requirements & Building
 
 - Rust toolchain (version 1.80+ or 2021 edition)
-- Root / superuser / `CAP_NET_RAW` privileges on Linux (required for raw sockets and `AF_PACKET`)
+- **Linux:** Root / superuser / `CAP_NET_RAW` privileges (required for raw sockets and `AF_PACKET`)
+- **Windows:** Administrator privileges and [Npcap](https://npcap.com/) (installed with "WinPcap API-compatible Mode" enabled)
 
 ### Build Instructions
 
@@ -35,9 +36,8 @@ cargo build --release
 
 The optimized binary will be created at:
 
-```bash
-./target/release/hping
-```
+- Linux: `./target/release/hping`
+- Windows: `.\target\release\hping.exe`
 
 ### Running Tests
 

@@ -20,7 +20,7 @@ pub fn run_listen(
         signature.unwrap_or("none")
     );
 
-    let mut sniffer = PacketSniffer::new(args.interface.as_deref())?;
+    let mut sniffer = PacketSniffer::new(args.interface.as_deref(), None)?;
 
     while running.load(Ordering::SeqCst) {
         if let Ok(Some(pkt)) = sniffer.recv_ipv4_packet() {

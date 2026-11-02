@@ -33,7 +33,7 @@ pub fn run_flood(
         target_display, dst_ip
     );
 
-    let sender = RawSocketSender::new(args.interface.as_deref())?;
+    let sender = RawSocketSender::new(args.interface.as_deref(), dst_ip)?;
     let mut rng = rand::thread_rng();
     let mut sent: u64 = 0;
     let payload = vec![0u8; args.data_size];

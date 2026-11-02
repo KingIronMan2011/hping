@@ -31,8 +31,8 @@ pub fn run_traceroute(args: &CliArgs, dst_ip: Ipv4Addr, running: Arc<AtomicBool>
 
     println!("HPING {} (traceroute mode): hop discovery over {}", target_display, dst_ip);
 
-    let sender = RawSocketSender::new(args.interface.as_deref())?;
-    let mut sniffer = PacketSniffer::new(args.interface.as_deref())?;
+    let sender = RawSocketSender::new(args.interface.as_deref(), dst_ip)?;
+    let mut sniffer = PacketSniffer::new(args.interface.as_deref(), Some(dst_ip))?;
 
     let mut current_ttl = if args.ttl != 64 { args.ttl } else { 1 };
     let max_ttl = 30u8.max(current_ttl);

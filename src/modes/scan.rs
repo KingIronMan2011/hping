@@ -112,7 +112,7 @@ pub fn run_scan(
 
     // Sniffer thread for scanning replies
     let sniffer_thread = thread::spawn(move || {
-        let mut sniffer = match PacketSniffer::new(sniffer_iface.as_deref()) {
+        let mut sniffer = match PacketSniffer::new(sniffer_iface.as_deref(), Some(dst_ip)) {
             Ok(s) => s,
             Err(_) => return,
         };
@@ -165,7 +165,7 @@ pub fn run_scan(
         }
     });
 
-    let sender = RawSocketSender::new(args.interface.as_deref())?;
+    let sender = RawSocketSender::new(args.interface.as_deref(), dst_ip)?;
     let mut rng = rand::thread_rng();
 
     // Probe loop
