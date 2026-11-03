@@ -292,6 +292,10 @@ pub struct CliArgs {
     /// Beep for every matching packet received
     #[arg(long = "beep")]
     pub beep: bool,
+
+    /// Install hping to Program Files and add to system PATH (Windows only)
+    #[arg(long = "install")]
+    pub install: bool,
 }
 
 impl CliArgs {

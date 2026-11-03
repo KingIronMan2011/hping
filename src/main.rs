@@ -30,7 +30,30 @@ fn resolve_host(host_str: &str) -> Result<Ipv4Addr, String> {
 }
 
 fn main() {
+    #[cfg(windows)]
+    {
+        let raw_args: Vec<String> = std::env::args().collect();
+        // If run with no arguments:
+        if raw_args.len() <= 1 {
+            // Check if launched from Explorer (e.g. double-clicked) vs existing console
+            if hping::installer::is_launched_from_explorer() {
+                // Interactive installer workflow for GUI double-click
+                hping::installer::run_installer(true);
+                return;
+            }
+            // If run from an existing commandline/terminal without arguments, proceed to standard behavior
+        }
+    }
+
     let args = CliArgs::parse();
+
+    #[cfg(windows)]
+    {
+        if args.install {
+            hping::installer::run_installer(false);
+            return;
+        }
+    }
 
     let running = Arc::new(AtomicBool::new(true));
     let r = Arc::clone(&running);
