@@ -8,6 +8,15 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g. 3.1.2)'
+        required: true
+        type: string
+      tag:
+        description: 'Tag to create (e.g. v3.1.2)'
+        required: true
+        type: string
 
 concurrency:
   group: release-${{ github.repository }}
@@ -33,7 +42,9 @@ jobs:
         id: version
         shell: bash
         run: |
-          if [[ "${{ github.ref }}" =~ ^refs/tags/v?([0-9]+(\.[0-9]+)*.*) ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            version="${{ github.event.inputs.version }}"
+          elif [[ "${{ github.ref }}" =~ ^refs/tags/v?([0-9]+(\.[0-9]+)*.*) ]]; then
             version="${BASH_REMATCH[1]}"
           else
             version=$(grep '^version' Cargo.toml | head -1 | cut -d '"' -f 2 || echo "3.1.1")
@@ -78,13 +89,17 @@ jobs:
         id: version
         shell: bash
         run: |
-          if [[ "${{ github.ref }}" =~ ^refs/tags/v?([0-9]+(\.[0-9]+)*.*) ]]; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            version="${{ github.event.inputs.version }}"
+            tag="${{ github.event.inputs.tag }}"
+          elif [[ "${{ github.ref }}" =~ ^refs/tags/v?([0-9]+(\.[0-9]+)*.*) ]]; then
             version="${BASH_REMATCH[1]}"
+            tag="v$version"
           else
             version=$(grep '^version' Cargo.toml | head -1 | cut -d '"' -f 2 || echo "3.1.1")
             if [ -z "$version" ]; then version="3.1.1"; fi
+            tag="v$version"
           fi
-          tag="v$version"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "VERSION=$version" >> "$GITHUB_ENV"
@@ -157,7 +172,7 @@ jobs:
           if-no-files-found: error
 
       - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
