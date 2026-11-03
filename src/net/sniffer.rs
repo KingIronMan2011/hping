@@ -10,9 +10,9 @@ use socket2::{Domain, Socket, Type};
 #[cfg(windows)]
 use crate::net::windows::{get_best_route_info, get_windows_adapters, PcapT, Wpcap, DLT_NULL};
 #[cfg(windows)]
-use std::net::Ipv4Addr;
-#[cfg(windows)]
 use std::sync::Arc;
+
+use std::net::Ipv4Addr;
 
 pub struct PacketSniffer {
     #[cfg(not(windows))]
